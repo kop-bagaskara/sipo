@@ -61,11 +61,11 @@
                                     <a href="{{ route('prepress.job-order.index') }}" aria-expanded="false">Job
                                         Prepress</a>
                                 </li>
-                                <li>
+                                {{-- <li>
                                     <a href="{{ route('development.development-input.form') }}"
                                         aria-expanded="false">Job
                                         Development</a>
-                                </li>
+                                </li> --}}
                             </ul>
                         </li>
                         <li>
@@ -209,6 +209,19 @@
                                         Fukumi</a>
                                 </li>
 
+                                <li>
+                                    <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
+                                        <span class="hide-menu">Portal Training</span>
+                                    </a>
+                                    <ul aria-expanded="false" class="collapse">
+                                        <li><a href="{{ route('hr.portal-training.master.categories.index') }}">Kategori Materi</a></li>
+                                        <li><a href="{{ route('hr.portal-training.master.difficulty-levels.index') }}">Tingkat Kesulitan</a></li>
+                                        <li><a href="{{ route('hr.portal-training.master.materials.index') }}">Materi Training</a></li>
+                                        <li><a href="{{ route('hr.portal-training.master.question-banks.index') }}">Bank Soal</a></li>
+                                        <li><a href="{{ route('hr.portal-training.master.assignments.index') }}">Training Assignments</a></li>
+                                    </ul>
+                                </li>
+
                                 {{-- <li>
                                 <a href="" aria-expanded="false"></a>
                             </li> --}}
@@ -221,12 +234,12 @@
                                 <i class="mdi mdi-file"></i><span class="hide-menu">Form Perizinan</span>
                             </a>
                         </li>
-                        <li>
+                        {{-- <li>
                             <a class="waves-effect waves-dark" href="{{ route('development.rnd-workspace.index') }}"
                                 aria-expanded="false">
                                 <i class="mdi mdi-cube"></i><span class="hide-menu">Development</span>
                             </a>
-                        </li>
+                        </li> --}}
                         <li>
                             <a class="waves-effect waves-dark" href="{{ route('ebook-pkb.index') }}" aria-expanded="false">
                                 <i class="mdi mdi-file-pdf-box"></i><span class="hide-menu">E-Book PKB</span>
@@ -243,18 +256,7 @@
                         </a>
                     </li> --}}
 
-                    {{-- <li>
-                        <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
-                            <i class="mdi mdi-school"></i><span class="hide-menu">Portal Training</span>
-                        </a>
-                        <ul aria-expanded="false" class="collapse">
-                            <li><a href="{{ route('hr.portal-training.master.categories.index') }}">Kategori Materi</a></li>
-                            <li><a href="{{ route('hr.portal-training.master.difficulty-levels.index') }}">Tingkat Kesulitan</a></li>
-                            <li><a href="{{ route('hr.portal-training.master.materials.index') }}">Materi Training</a></li>
-                            <li><a href="{{ route('hr.portal-training.master.question-banks.index') }}">Bank Soal</a></li>
-                            <li><a href="{{ route('hr.portal-training.master.assignments.index') }}">Training Assignments</a></li>
-                        </ul>
-                    </li> --}}
+
                 @endif
 
 
@@ -283,8 +285,8 @@
                             </li>
                             <li><a href="{{ route('settings.index') }}">Setting</a></li>
                             <li><a href="{{ route('development.master-proses') }}">Master Proses Development</a></li>
-                            <li><a href="{{ route('development-email-notification-settings.index') }}">Master Email
-                                    Development</a></li>
+                            {{-- <li><a href="{{ route('development-email-notification-settings.index') }}">Master Email
+                                    Development</a></li> --}}
                         </ul>
                     </li>
                 @endif
@@ -309,9 +311,9 @@
                                 <li>
                                     <a href="{{ route('report.work-order-percentage.index') }}">WO Percentage</a>
                                 </li>
-                                <li>
+                                {{-- <li>
                                     <a href="{{ route('report.development.index') }}">Development Item</a>
-                                </li>
+                                </li> --}}
                                 <li>
                                     <a href="{{ route('report.work-order-good-issue.index') }}">WO Good Issue</a>
                                 </li>
