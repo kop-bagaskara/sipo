@@ -69,3 +69,6 @@ timestamps()
 
 # Blackbox
 .blackbox/
+
+# Laravel Session files
+/storage/framework/sessions/*
