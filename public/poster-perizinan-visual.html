@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Perizinan HR - Visual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+            padding: 30px 20px;
+        }
+        .poster {
+            background: white;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 35px;
+        }
+
+        .permit-section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        .permit-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        .permit-icon {
+            font-size: 3em;
+            margin-right: 15px;
+        }
+        .permit-title {
+            flex: 1;
+        }
+        .permit-title h2 {
+            font-size: 1.8em;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        .permit-title p {
+            color: #7f8c8d;
+            font-size: 0.95em;
+            margin-top: 5px;
+        }
+        .screenshot-placeholder {
+            background: #f8f9fa;
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .screenshot-placeholder:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .screenshot-placeholder img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .screenshot-placeholder .placeholder-text {
+            color: #adb5bd;
+            font-size: 1.1em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .screenshot-placeholder .placeholder-text i {
+            font-size: 3em;
+        }
+        .info-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .info-box h4 {
+            color: #856404;
+            font-size: 1em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        .info-box li {
+            color: #856404;
+            font-size: 0.9em;
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .info-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: 700;
+        }
+
+        .steps {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .step {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .step-number {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            line-height: 30px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .footer h3 {
+            margin-bottom: 10px;
+        }
+        .footer p {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .poster {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .permit-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+            .steps {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <div class="header">
+            <h1>📋 PANDUAN LENGKAP PERIZINAN HR</h1>
+            <p>Portal HR → Pilih Menu → Isi Form → Submit → Tunggu Approval</p>
+        </div>
+
+        <div class="content">
+            <!-- TUKAR SHIFT -->
+            <div class="permit-section">
+                <div class="permit-header">
+                    <span class="permit-icon">🔄</span>
+                    <div class="permit-title">
+                        <h2>Tukar Shift</h2>
+                        <p>Tukar jadwal kerja dengan rekan lain</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="placeholder-text">
+                        <i>📸</i>
+                        <span>Screenshot Form Tukar Shift</span>
+                        <small>Paste screenshot form di sini</small>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>⚡ Ketentuan:</h4>
+                    <ul>
+                        <li>Butuh persetujuan rekan yang ditukar</li>
+                        <li>Butuh approval atasan</li>
+                        <li>Ajukan minimal 1 hari sebelumnya</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TIDAK MASUK KERJA -->
+            <div class="permit-section">
+                <div class="permit-header">
+                    <span class="permit-icon">🤒</span>
+                    <div class="permit-title">
+                        <h2>Tidak Masuk Kerja</h2>
+                        <p>Sakit, Izin, atau Cuti</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="placeholder-text">
+                        <i>📸</i>
+                        <span>Screenshot Form Izin/Sakit</span>
+                        <small>Paste screenshot form di sini</small>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>📄 Ketentuan:</h4>
+                    <ul>
+                        <li>Sakit: Lampirkan surat dokter (jika &gt; 2 hari)</li>
+                        <li>Izin: Jelaskan alasan yang jelas</li>
+                        <li>Cuti: Sesuai kuota cuti tersedia</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- SPL / LEMBUR -->
+            <div class="permit-section">
+                <div class="permit-header">
+                    <span class="permit-icon">⏰</span>
+                    <div class="permit-title">
+                        <h2>SPL (Surat Perintah Lembur)</h2>
+                        <p>Ajukan lembur untuk pekerjaan tambahan</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="placeholder-text">
+                        <i>📸</i>
+                        <span>Screenshot Form SPL</span>
+                        <small>Paste screenshot form di sini</small>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>⏰ Ketentuan:</h4>
+                    <ul>
+                        <li>Sebutkan jam lembur dengan jelas</li>
+                        <li>Jelaskan jenis pekerjaan</li>
+                        <li>Butuh approval atasan terlebih dahulu</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PINJAM KENDARAAN -->
+            <div class="permit-section">
+                <div class="permit-header">
+                    <span class="permit-icon">🚗</span>
+                    <div class="permit-title">
+                        <h2>Pinjam Kendaraan</h2>
+                        <p>Mobil/Motor untuk dinas luar</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="placeholder-text">
+                        <i>📸</i>
+                        <span>Screenshot Form Kendaraan</span>
+                        <small>Paste screenshot form di sini</small>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>🚗 Ketentuan:</h4>
+                    <ul>
+                        <li>Pengajuan minimal H-1</li>
+                        <li>Mendesak? Butuh approval SPV</li>
+                        <li>Kembalikan dalam kondisi baik</li>
+                        <li>Bensin terisi sebelum digunakan</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PINJAM INVENTARIS -->
+            <div class="permit-section">
+                <div class="permit-header">
+                    <span class="permit-icon">💻</span>
+                    <div class="permit-title">
+                        <h2>Pinjam Inventaris</h2>
+                        <p>Laptop atau peralatan kantor</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="placeholder-text">
+                        <i>📸</i>
+                        <span>Screenshot Form Inventaris</span>
+                        <small>Paste screenshot form di sini</small>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>💻 Ketentuan:</h4>
+                    <ul>
+                        <li>Laptop: Masa pinjam maksimal 1 bulan</li>
+                        <li>Bisa perpanjang dengan pengajuan baru</li>
+                        <li>Kembalikan dalam kondisi baik</li>
+                        <li>Rusak? Segera laporkan ke IT</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ALUR UMUM -->
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <strong>Buka Portal HR</strong>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <strong>Pilih Menu</strong>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <strong>Isi Form</strong>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <strong>Submit</strong>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <strong>Tunggu Approval</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>💡 Butuh Bantuan?</h3>
+            <p>Hubungi HR • <strong>📞 ext. 101</strong> • <strong>📧 hr@krisan.co.id</strong></p>
+            <p style="margin-top: 10px; font-size: 0.85em;">Cek status pengajuan di menu <strong>Riwayat</strong></p>
+        </div>
+    </div>
+</body>
+</html>
