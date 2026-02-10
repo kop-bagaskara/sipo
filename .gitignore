@@ -72,3 +72,4 @@ timestamps()
 
 # Laravel Session files
 /storage/framework/sessions/*
+/public/uploads/
