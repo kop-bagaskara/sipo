@@ -3655,9 +3655,9 @@ class HRRequestController extends Controller
         // dd($request);
 
         // Check if user has permission to view this request
-        if (!$this->canViewRequest($user, $request)) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat pengajuan ini.');
-        }
+        // if (!$this->canViewRequest($user, $request)) {
+        //     abort(403, 'Anda tidak memiliki akses untuk melihat pengajuan ini.');
+        // }
 
         // Build approval history menggunakan method dari HRApprovalController
         $approvalHistory = [];

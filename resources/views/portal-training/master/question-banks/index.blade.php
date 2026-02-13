@@ -243,6 +243,9 @@
                         </h4>
                     </div>
                     <div>
+                        <a href="{{ route('hr.portal-training.master.question-banks.download-template') }}" class="btn btn-success" style="margin-right: 10px;">
+                            <i class="mdi mdi-download"></i> Download Template Excel
+                        </a>
                         <button type="button" class="btn btn-info" onclick="importQuestions()" style="margin-right: 10px;">
                             <i class="mdi mdi-upload"></i> Import
                         </button>
@@ -257,10 +260,12 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th width="50">No</th>
-                                    <th width="300">Soal</th>
-                                    <th width="150">Kategori</th>
+                                    <th width="250">Soal</th>
+                                    <th width="120">Kategori</th>
+                                    <th width="150">Tema</th>
+                                    <th width="100">Tipe Soal</th>
                                     <th width="100">Tipe</th>
-                                    <th width="120">Kesulitan</th>
+                                    <th width="100">Kesulitan</th>
                                     <th width="80">Poin</th>
                                     <th width="100">Status</th>
                                     <th width="150" class="text-center">Aksi</th>
@@ -310,6 +315,29 @@
                                         <option value="menengah ke atas">Menengah ke Atas</option>
                                         <option value="sulit">Sulit</option>
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="questionTheme" class="font-weight-600">Tema Soal <span class="text-muted">(Opsional)</span></label>
+                                    <input type="text" name="theme" id="questionTheme" class="form-control" placeholder="Contoh: Pembeda Iso 9001:2015, Kepanjangan ISO, dll">
+                                    <small class="text-muted">Tema untuk mengelompokkan soal dalam kategori yang sama</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="questionTypeNumber" class="font-weight-600">Tipe Soal <span class="text-muted">(Opsional)</span></label>
+                                    <select name="type_number" id="questionTypeNumber" class="form-control">
+                                        <option value="">Pilih Tipe</option>
+                                        <option value="1">TIPE 1</option>
+                                        <option value="2">TIPE 2</option>
+                                        <option value="3">TIPE 3</option>
+                                        <option value="4">TIPE 4</option>
+                                        <option value="5">TIPE 5</option>
+                                    </select>
+                                    <small class="text-muted">Nomor tipe soal untuk variasi dalam tema yang sama</small>
                                 </div>
                             </div>
                         </div>
@@ -417,10 +445,10 @@
 
     <!-- Import Modal -->
     <div class="modal fade" id="importModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-info">
-                    <h5 class="modal-title"><i class="mdi mdi-upload"></i> Import Soal dari CSV</h5>
+                    <h5 class="modal-title"><i class="mdi mdi-upload"></i> Import Soal dari Excel/CSV</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -430,49 +458,103 @@
                     <div class="modal-body">
                         <div class="alert alert-info">
                             <i class="mdi mdi-information"></i>
-                            <strong>Format CSV:</strong><br>
-                            <small>question,type,category_id,difficulty_level,correct_answer,points,explanation,option_a,option_b,option_c,option_d</small>
+                            <strong>Format Excel/CSV yang didukung:</strong><br>
+                            <small>
+                                <strong>Format Baru (Direkomendasikan):</strong> NO | TEMA | TIPE | PERTANYAAN | PILIHAN_A | PILIHAN_B | PILIHAN_C | PILIHAN_D | JAWABAN_BENAR | MATERIAL_ID | DIFFICULTY_LEVEL | POINTS<br>
+                                <strong>Format Lama (Multiple TIPE per baris):</strong> NO | TEMA | TIPE 1 | TIPE 2 | TIPE 3 | TIPE ... (setiap kolom TIPE berisi soal lengkap dengan pertanyaan dan pilihan jawaban)<br>
+                                <strong>Format CSV:</strong> question,type,category_id,difficulty_level,correct_answer,points,explanation,theme,type_number,option_a,option_b,option_c,option_d
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="importMaterialId" class="font-weight-600">Kategori Materi (Opsional)</label>
+                                    <select name="material_id" id="importMaterialId" class="form-control">
+                                        <option value="">Pilih Materi (Opsional)</option>
+                                        @foreach($materials as $material)
+                                            <option value="{{ $material->id }}">{{ $material->material_title }} (ID: {{ $material->id }})</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Jika dikosongkan, harus diisi di file Excel. Data yang tersedia: {{ count($materials) }} materi</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="importDifficultyLevelId" class="font-weight-600">Tingkat Kesulitan (Opsional)</label>
+                                    <select name="difficulty_level_id" id="importDifficultyLevelId" class="form-control">
+                                        <option value="">Pilih Tingkat Kesulitan (Opsional)</option>
+                                        @foreach($difficultyLevels as $level)
+                                            <option value="{{ $level->id }}">{{ $level->level_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Jika dikosongkan, harus diisi di file Excel</small>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="importFile" class="font-weight-600">Pilih File CSV <span class="text-danger">*</span></label>
+                            <label for="importFile" class="font-weight-600">Pilih File Excel/CSV <span class="text-danger">*</span></label>
                             <div class="custom-file">
-                                <input type="file" name="file" id="importFile" class="custom-file-input" accept=".csv" required>
-                                <label class="custom-file-label" for="importFile" id="importFileName">Pilih file CSV...</label>
+                                <input type="file" name="file" id="importFile" class="custom-file-input" accept=".xlsx,.xls,.csv" required>
+                                <label class="custom-file-label" for="importFile" id="importFileName">Pilih file Excel atau CSV...</label>
                             </div>
-                            <small class="text-muted">Maksimal ukuran file: 5MB</small>
+                            <small class="text-muted">Maksimal ukuran file: 10MB. Format: .xlsx, .xls, atau .csv</small>
                         </div>
 
                         <div class="form-group mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="font-weight-600 mb-0">Contoh Format CSV:</label>
-                                <a href="javascript:void(0)" onclick="downloadTemplate()" class="btn btn-sm btn-success">
-                                    <i class="mdi mdi-download"></i> Download Template
+                                <label class="font-weight-600 mb-0">Download Template Excel:</label>
+                                <a href="{{ route('hr.portal-training.master.question-banks.download-template') }}" class="btn btn-sm btn-success">
+                                    <i class="mdi mdi-download"></i> Download Template Excel
                                 </a>
                             </div>
-                            <div class="border rounded p-3 bg-light">
-                                <code style="font-size: 11px; display: block; white-space: pre; overflow-x: auto;">question,type,category_id,difficulty_level,correct_answer,points,explanation,option_a,option_b,option_c,option_d
-"Apa ibukota Indonesia?",pilihan ganda,1,mudah,A,10,"Jakarta adalah ibukota Indonesia","Jakarta","Bandung","Surabaya","Medan"
-"Jelaskan pengertian demokrasi!",essay,2,cukup,"Demokrasi adalah sistem pemerintahan dari rakyat",15,"Jawaban harus lengkap",,,</code>
+                            <div class="alert alert-warning">
+                                <i class="mdi mdi-alert"></i>
+                                <strong>Catatan Format Excel:</strong>
+                                <ul class="mb-0 small">
+                                    <li><strong>Format Baru (Direkomendasikan):</strong>
+                                        <ul>
+                                            <li>Kolom <strong>NO</strong>: Nomor urut (opsional)</li>
+                                            <li>Kolom <strong>TEMA</strong>: Tema/kategori soal (opsional)</li>
+                                            <li>Kolom <strong>TIPE</strong>: Tipe soal seperti "TIPE 1", "TIPE 2", dll (opsional)</li>
+                                            <li>Kolom <strong>PERTANYAAN</strong>: Pertanyaan soal (wajib)</li>
+                                            <li>Kolom <strong>PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D</strong>: Pilihan jawaban (minimal A dan B wajib)</li>
+                                            <li>Kolom <strong>JAWABAN_BENAR</strong>: Jawaban benar (A, B, C, atau D) (wajib)</li>
+                                            <li>Kolom <strong>MATERIAL_ID</strong>: ID Kategori Materi (wajib jika tidak diisi di form)</li>
+                                            <li>Kolom <strong>DIFFICULTY_LEVEL</strong>: Nama tingkat kesulitan (wajib jika tidak diisi di form)</li>
+                                            <li>Kolom <strong>POINTS</strong>: Poin soal (default: 10)</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Format Lama (Multiple TIPE per baris):</strong>
+                                        <ul>
+                                            <li>Kolom <strong>NO</strong>: Nomor urut (opsional)</li>
+                                            <li>Kolom <strong>TEMA</strong>: Tema/kategori soal (akan digunakan untuk semua TIPE dalam baris yang sama)</li>
+                                            <li>Kolom <strong>TIPE 1, TIPE 2, TIPE 3, TIPE</strong>: Setiap kolom berisi soal lengkap dengan format:<br>
+                                                <code>Pertanyaan?<br>A. Pilihan A<br>B. Pilihan B<br>C. Pilihan C<br>D. Pilihan D</code>
+                                            </li>
+                                            <li>Kolom <strong>JAWABAN_TIPE1, JAWABAN_TIPE2, JAWABAN_TIPE3, JAWABAN_TIPE</strong>: Jawaban benar per TIPE (A, B, C, atau D) - <strong>OPSIONAL</strong></li>
+                                            <li><strong>Cara menentukan jawaban benar (pilih salah satu):</strong>
+                                                <ol>
+                                                    <li><strong>Kolom terpisah:</strong> Isi kolom JAWABAN_TIPE1, JAWABAN_TIPE2, dst dengan A, B, C, atau D</li>
+                                                    <li><strong>Tanda dalam cell:</strong> Tambahkan tanda <code>*</code>, <code>[CORRECT]</code>, <code>[BENAR]</code>, atau <code>[TRUE]</code> di akhir pilihan jawaban yang benar<br>
+                                                        Contoh: <code>A. Pilihan A *</code> atau <code>B. Pilihan B [CORRECT]</code>
+                                                    </li>
+                                                </ol>
+                                            </li>
+                                            <li><strong>Catatan:</strong> Setiap TIPE akan di-create sebagai soal terpisah dengan TEMA yang sama. Jika tidak ada tanda atau kolom jawaban, default ke A.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="font-weight-600">Keterangan Tipe Soal:</label>
-                            <ul class="small text-muted">
-                                <li><strong>pilihan ganda</strong> - Pilihan ganda (wajib isi option_a sampai option_d)</li>
-                                <li><strong>essay</strong> - Essay (opsional boleh kosong)</li>
-                            </ul>
                         </div>
 
                         <div class="form-group">
                             <label class="font-weight-600">Keterangan Tingkat Kesulitan:</label>
-                            <ul class="small text-muted">
-                                <li>paling mudah</li>
-                                <li>mudah</li>
-                                <li>cukup</li>
-                                <li>menengah ke atas</li>
-                                <li>sulit</li>
+                            <ul class="small text-muted mb-0">
+                                @foreach($difficultyLevels as $level)
+                                    <li>{{ $level->level_name }}</li>
+                                @endforeach
                             </ul>
                         </div>
                     </div>
@@ -512,6 +594,8 @@
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'question_preview', name: 'question_preview' },
                     { data: 'category_name', name: 'category_name' },
+                    { data: 'theme', name: 'theme' },
+                    { data: 'type_number', name: 'type_number' },
                     { data: 'type_badge', name: 'type_badge' },
                     { data: 'difficulty_badge', name: 'difficulty_badge' },
                     { data: 'points', name: 'points' },
@@ -579,6 +663,8 @@
                             <div style="text-align: left;">
                                 <p><strong>Soal:</strong><br>${data.question}</p>
                                 <p><strong>Kategori:</strong> ${data.category_name || '-'}</p>
+                                <p><strong>Tema:</strong> ${data.theme || '-'}</p>
+                                <p><strong>Tipe Soal:</strong> ${data.type_number ? 'TIPE ' + data.type_number : '-'}</p>
                                 <p><strong>Tingkat Kesulitan:</strong> ${data.difficulty_level || '-'}</p>
                                 <p><strong>Tipe:</strong> ${data.type || '-'}</p>
                                 ${optionsHtml ? '<p><strong>Opsi:</strong><br>' + optionsHtml + '</p>' : ''}
@@ -595,14 +681,20 @@
             // Edit button
             $(document).on('click', '.btn-edit', function() {
                 var id = $(this).data('id');
+                $('#editId').val(id);
                 $.get(`{{ route('hr.portal-training.master.question-banks.edit', ':id') }}`.replace(':id', id), function(data) {
                     // Clone the add form structure
                     var html = $('#addForm .modal-body').html();
                     $('#editModalBody').html(html);
+                    
+                    // Add hidden id field
+                    $('#editModalBody').prepend('<input type="hidden" name="id" value="' + id + '">');
 
                     // Populate values
                     $('#editModalBody [name="category_id"]').val(data.category_id);
                     $('#editModalBody [name="difficulty_level"]').val(data.difficulty_level);
+                    $('#editModalBody [name="theme"]').val(data.theme || '');
+                    $('#editModalBody [name="type_number"]').val(data.type_number || '');
                     $('#editModalBody [name="type"]').val(data.type);
                     $('#editModalBody [name="points"]').val(data.points);
                     $('#editModalBody [name="question"]').val(data.question);
@@ -693,7 +785,7 @@
         // Handle file import
         $('#importFile').on('change', function() {
             var fileName = $(this).val().split('\\').pop();
-            $('#importFileName').text(fileName ? fileName : 'Pilih file CSV...');
+            $('#importFileName').text(fileName ? fileName : 'Pilih file Excel atau CSV...');
         });
 
         // Import form submit
@@ -732,20 +824,50 @@
                     // Close loading alert first
                     Swal.close();
 
-                    // Show success message
+                    // Show success message with error details if any
                     setTimeout(function() {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil',
-                            text: response.message || 'Soal berhasil diimport.',
-                            timer: 3000,
-                            showConfirmButton: false
-                        }).then(function() {
-                            $('#importModal').modal('hide');
-                            $('#importForm')[0].reset();
-                            $('#importFileName').text('Pilih file CSV...');
-                            table.ajax.reload();
-                        });
+                        var message = response.message || 'Soal berhasil diimport.';
+                        var hasErrors = response.error_count > 0 && response.errors && response.errors.length > 0;
+                        
+                        if (hasErrors) {
+                            // Build error details HTML
+                            var errorDetails = '<div style="text-align: left; max-height: 300px; overflow-y: auto; margin-top: 15px;">';
+                            errorDetails += '<strong>Detail Error (' + response.error_count + ' error):</strong><br><br>';
+                            errorDetails += '<ul style="margin: 0; padding-left: 20px;">';
+                            response.errors.forEach(function(error) {
+                                errorDetails += '<li style="margin-bottom: 5px; font-size: 12px;">' + error + '</li>';
+                            });
+                            errorDetails += '</ul>';
+                            errorDetails += '</div>';
+                            
+                            Swal.fire({
+                                icon: response.success_count > 0 ? 'warning' : 'error',
+                                title: response.success_count > 0 ? 'Berhasil dengan Error' : 'Gagal',
+                                html: '<div style="text-align: center;">' + message + '</div>' + errorDetails,
+                                width: '600px',
+                                confirmButtonText: 'OK'
+                            }).then(function() {
+                                if (response.success_count > 0) {
+                                    $('#importModal').modal('hide');
+                                    $('#importForm')[0].reset();
+                                    $('#importFileName').text('Pilih file Excel atau CSV...');
+                                    table.ajax.reload();
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: message,
+                                timer: 3000,
+                                showConfirmButton: false
+                            }).then(function() {
+                                $('#importModal').modal('hide');
+                                $('#importForm')[0].reset();
+                                $('#importFileName').text('Pilih file Excel atau CSV...');
+                                table.ajax.reload();
+                            });
+                        }
                     }, 300);
                 },
                 error: function(xhr) {
@@ -790,11 +912,12 @@
         // Download CSV Template
         function downloadTemplate() {
             var csvContent = [
-                'question,type,category_id,difficulty_level,correct_answer,points,explanation,option_a,option_b,option_c,option_d',
-                '"Apa ibukota Indonesia?",pilihan ganda,1,mudah,A,10,"Jakarta adalah ibukota Indonesia","Jakarta","Bandung","Surabaya","Medan"',
+                'question,type,category_id,difficulty_level,correct_answer,points,explanation,theme,type_number,option_a,option_b,option_c,option_d',
+                '"Apa ibukota Indonesia?",pilihan ganda,1,mudah,A,10,"Jakarta adalah ibukota Indonesia",,,"Jakarta","Bandung","Surabaya","Medan"',
                 '"Sebutkan 3 provinsi di Indonesia!",essay,1,mudah,"Jawa Barat, Jawa Tengah, Jawa Timur",10,"Salah satu jawaban yang benar",,,',
-                '"Apa fungsi vitamin C?",pilihan ganda,2,cukup,C,15,"Vitamin C berfungsi sebagai antioksidan","Membantu pencernaan","Menguatkan tulang","Antioksidan","Meningkatkan nafsu makan"',
-                '"Jelaskan pengertian demokrasi!",essay,2,cukup,"Demokrasi adalah sistem pemerintahan dari rakyat, oleh rakyat, untuk rakyat",15,"Jawaban harus mencakup unsur rakyat",,,'
+                '"Apa fungsi vitamin C?",pilihan ganda,2,cukup,C,15,"Vitamin C berfungsi sebagai antioksidan",,,"Membantu pencernaan","Menguatkan tulang","Antioksidan","Meningkatkan nafsu makan"',
+                '"Jelaskan pengertian demokrasi!",essay,2,cukup,"Demokrasi adalah sistem pemerintahan dari rakyat, oleh rakyat, untuk rakyat",15,"Jawaban harus mencakup unsur rakyat",,,',
+                '"What is one of the differences between ISO 9001 version 2015?",pilihan ganda,1,mudah,C,10,"Risk-based thinking","Pembeda Iso 9001:2015",1,"Option A","Option B","Risk-based thinking has been formed.","Option D"'
             ];
 
             var csvString = csvContent.join('\n');

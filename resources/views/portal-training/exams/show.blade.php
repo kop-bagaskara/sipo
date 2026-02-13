@@ -168,7 +168,9 @@
             </div>
         @endif
     @endsection
-    @section('js')
+    @section('scripts')
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.9/sweetalert2.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.9/sweetalert2.min.css">
         <script>
             function selectAnswer(questionId, answer) {
                 const questionCard = document.querySelector(`[data-question-id="${questionId}"]`);
@@ -237,8 +239,60 @@
                 e.returnValue = '';
             });
 
-            document.getElementById('exam-form').addEventListener('submit', function() {
+            document.getElementById('exam-form').addEventListener('submit', function(e) {
+                e.preventDefault();
                 window.removeEventListener('beforeunload', arguments.callee);
+                
+                // Submit via AJAX
+                const formData = new FormData(this);
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin mr-2"></i> Menyimpan...';
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Tampilkan hasil
+                        Swal.fire({
+                            icon: data.passed ? 'success' : 'info',
+                            title: data.passed ? 'Lulus!' : 'Belum Lulus',
+                            text: data.message,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Redirect ke session atau dashboard
+                            if (data.next_session_url) {
+                                window.location.href = data.next_session_url;
+                            } else {
+                                window.location.href = '{{ route("hr.portal-training.index") }}';
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: data.message || 'Terjadi kesalahan saat menyimpan jawaban.'
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="mdi mdi-check-circle mr-2"></i> Selesai & Submit Jawaban';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Terjadi kesalahan saat menyimpan jawaban.'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="mdi mdi-check-circle mr-2"></i> Selesai & Submit Jawaban';
+                });
             });
         </script>
     @endsection

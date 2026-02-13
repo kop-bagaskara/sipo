@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Forecast;
 use App\Models\ForecastItem;
 use App\Models\ForecastWeeklyData;
-use App\Imports\ForecastImport;
 use App\Imports\ForecastMultiSheetImport;
 use App\Exports\ForecastTemplateExport;
 use Yajra\DataTables\Facades\DataTables;
@@ -309,9 +308,13 @@ class ForecastingController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls|max:10240',
+            'customer' => 'required|string',
         ]);
 
         try {
+            // Get customer from form
+            $customer = $request->input('customer');
+
             // Save uploaded file temporarily
             $file = $request->file('file');
 
@@ -344,8 +347,11 @@ class ForecastingController extends Controller
                 throw new \Exception("File tidak dapat disimpan: {$fullPath}. Path yang dicoba: " . storage_path('app/' . $filePath));
             }
 
-            // Process multi-sheet import (preview only, no save)
-            $result = ForecastMultiSheetImport::processFile($fullPath);
+            // Process multi-sheet import with customer from form
+            $result = ForecastMultiSheetImport::processFile($fullPath, $customer);
+
+            // Store customer in session for confirmImport
+            session(['forecast_import_customer' => $customer]);
 
             // Organize data for preview
             $previewData = self::organizePreviewData($result['results']);
@@ -438,6 +444,13 @@ class ForecastingController extends Controller
         ]);
 
         try {
+            // Get customer from session (set during previewImport)
+            $customer = session('forecast_import_customer');
+
+            if (!$customer) {
+                throw new \Exception("Sesi customer tidak ditemukan. Silakan ulangi proses import.");
+            }
+
             // Get full path
             $filePath = $request->temp_file_path;
             try {
@@ -450,8 +463,8 @@ class ForecastingController extends Controller
                 throw new \Exception("File tidak ditemukan: {$fullPath}");
             }
 
-            // Process multi-sheet import
-            $result = ForecastMultiSheetImport::processFile($fullPath);
+            // Process multi-sheet import with customer from session
+            $result = ForecastMultiSheetImport::processFile($fullPath, $customer);
 
             DB::beginTransaction();
 
@@ -567,7 +580,7 @@ class ForecastingController extends Controller
             }
 
             // Count errors
-            foreach ($result['errors'] as $error) {
+            foreach ($result['errors'] as $errorItem) {
                 $totalErrors++;
             }
 
@@ -577,6 +590,9 @@ class ForecastingController extends Controller
             if (file_exists($fullPath)) {
                 @unlink($fullPath);
             }
+
+            // Clean up session
+            session()->forget('forecast_import_customer');
 
             $message = "Import berhasil! ";
             $message .= count($importedForecasts) . " forecast diimport dengan total {$totalImported} item";
@@ -603,6 +619,9 @@ class ForecastingController extends Controller
             if (isset($fullPath) && file_exists($fullPath)) {
                 @unlink($fullPath);
             }
+
+            // Clean up session on error
+            session()->forget('forecast_import_customer');
 
             return response()->json([
                 'success' => false,

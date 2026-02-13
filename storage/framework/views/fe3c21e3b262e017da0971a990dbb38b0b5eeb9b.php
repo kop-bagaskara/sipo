@@ -742,7 +742,7 @@
                                 <h6 class="alert-heading">
                                     <i class="mdi mdi-paperclip me-2"></i>Lampiran
                                 </h6>
-                                <a href="<?php echo e(asset('storage/' . $request->attachment_path)); ?>" target="_blank"
+                                <a href="<?php echo e(asset('sipo_krisan/public/storage/' . $request->attachment_path)); ?>" target="_blank"
                                     class="btn btn-outline-primary btn-sm">
                                     <i class="mdi mdi-download me-2"></i>Download Lampiran
                                 </a>

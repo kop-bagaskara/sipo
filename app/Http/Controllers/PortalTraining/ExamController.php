@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PortalTraining;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\TrainingAssignment;
 use App\Models\TrainingMaterial;
 use App\Models\TrainingExam;
@@ -12,6 +13,7 @@ use App\Models\TrainingExamQuestion;
 use App\Models\TrainingQuestionBank;
 use App\Models\TrainingResult;
 use App\Models\TrainingMaterialProgress;
+use App\Models\TrainingSession;
 use Carbon\Carbon;
 
 class ExamController extends Controller
@@ -36,7 +38,7 @@ class ExamController extends Controller
             ->first();
 
         if (!$progress) {
-            return redirect()->route('portal-training.materials.show', $materialId)
+            return redirect()->route('hr.portal-training.materials.show', $materialId)
                 ->with('error', 'Harap selesaikan materi terlebih dahulu sebelum mengikuti ujian.');
         }
 
@@ -46,7 +48,7 @@ class ExamController extends Controller
             ->first();
 
         if ($existingExam && $existingExam->status == 'completed') {
-            return redirect()->route('portal-training.exams.result', $existingExam->id);
+            return redirect()->route('hr.portal-training.exams.result', $existingExam->id);
         }
 
         return view('portal-training.exams.show', compact('material'));
@@ -62,7 +64,18 @@ class ExamController extends Controller
     public function start(Request $request, $materialId)
     {
         $request->validate([
-            'assignment_id' => 'required|exists:training_assignments,id',
+            'assignment_id' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('pgsql3')
+                        ->table('tb_training_assignments')
+                        ->where('id', $value)
+                        ->exists();
+                    if (!$exists) {
+                        $fail('Assignment tidak ditemukan.');
+                    }
+                },
+            ],
         ]);
 
         $user = Auth::user();
@@ -306,6 +319,17 @@ class ExamController extends Controller
             $result->update(['certificate_path' => $certificatePath]);
         }
 
+        // Cari next session setelah selesai ujian
+        $assignment = TrainingAssignment::find($exam->assignment_id);
+        $nextSession = null;
+        if ($assignment && $assignment->training) {
+            // Ambil session pertama dari training (atau bisa juga ambil berdasarkan material)
+            $nextSession = TrainingSession::where('training_id', $assignment->training_id)
+                ->active()
+                ->orderBy('session_order', 'asc')
+                ->first();
+        }
+
         return response()->json([
             'success' => true,
             'score' => $totalScore,
@@ -315,7 +339,10 @@ class ExamController extends Controller
             'result_id' => $result->id,
             'message' => $passed
                 ? 'Selamat! Anda lulus ujian.'
-                : 'Maaf, Anda belum lulus. Silakan coba lagi.'
+                : 'Maaf, Anda belum lulus. Silakan coba lagi.',
+            'next_session_url' => $nextSession && $assignment
+                ? route('hr.portal-training.sessions.show', [$assignment->id, $nextSession->id])
+                : route('hr.portal-training.index')
         ]);
     }
 

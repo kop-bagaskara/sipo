@@ -15,8 +15,10 @@ class ForecastMultiSheetImport
 
     /**
      * Process Excel file with multiple sheets
+     * @param string $filePath Path to Excel file
+     * @param string|null $overrideCustomer Override customer from form (optional)
      */
-    public static function processFile($filePath)
+    public static function processFile($filePath, $overrideCustomer = null)
     {
         $results = [];
         $errors = [];
@@ -44,6 +46,11 @@ class ForecastMultiSheetImport
                             'error' => 'Tidak dapat memparse nama sheet'
                         ];
                         continue;
+                    }
+
+                    // Override customer if provided from form
+                    if ($overrideCustomer) {
+                        $parsed['customer'] = $overrideCustomer;
                     }
 
                     // Find header row (might not be row 1)

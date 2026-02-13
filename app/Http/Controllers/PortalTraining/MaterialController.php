@@ -5,6 +5,8 @@ namespace App\Http\Controllers\PortalTraining;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use App\Models\TrainingAssignment;
 use App\Models\TrainingMaterial;
 use App\Models\TrainingMaterialProgress;
@@ -40,10 +42,18 @@ class MaterialController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $employeeId = $user->id;
+        $employeeId = $user->id ?? null;
+        
+        // Validasi employeeId dan id
+        if (empty($employeeId) || empty($id)) {
+            return redirect()->route('portal-training.index')
+                ->with('error', 'Data tidak valid.');
+        }
 
         $material = TrainingMaterial::with(['category', 'progress' => function($query) use ($employeeId) {
-            $query->where('employee_id', $employeeId);
+            if (!empty($employeeId)) {
+                $query->where('employee_id', $employeeId);
+            }
         }])->findOrFail($id);
 
         // Cek apakah user punya akses ke material ini
@@ -54,21 +64,35 @@ class MaterialController extends Controller
         }
 
         // Ambil assignment terkait
-        $assignment = TrainingAssignment::where('employee_id', $employeeId)
-            ->whereHas('materials', function($query) use ($id) {
-                $query->where('id', $id);
-            })
-            ->first();
+        // Gunakan query langsung ke pivot table untuk menghindari ambiguous column
+        $assignmentIds = DB::connection('pgsql3')
+            ->table('tb_training_assignment_material')
+            ->where('material_id', $id)
+            ->pluck('assignment_id')
+            ->toArray();
+        
+        $assignment = null;
+        if (!empty($assignmentIds)) {
+            $assignment = TrainingAssignment::where('employee_id', $employeeId)
+                ->whereIn('id', $assignmentIds)
+                ->first();
+        }
+
+        // Jika assignment tidak ditemukan, redirect
+        if (!$assignment) {
+            return redirect()->route('portal-training.index')
+                ->with('error', 'Assignment tidak ditemukan untuk materi ini.');
+        }
 
         // Ambil progress material ini
-        $progress = TrainingMaterialProgress::where('assignment_id', $assignment->id)
+        $materialProgress = TrainingMaterialProgress::where('assignment_id', $assignment->id)
             ->where('material_id', $id)
             ->where('employee_id', $employeeId)
             ->first();
 
         // Jika belum ada progress, buat baru
-        if (!$progress) {
-            $progress = TrainingMaterialProgress::create([
+        if (!$materialProgress) {
+            $materialProgress = TrainingMaterialProgress::create([
                 'assignment_id' => $assignment->id,
                 'material_id' => $id,
                 'employee_id' => $employeeId,
@@ -78,20 +102,26 @@ class MaterialController extends Controller
         }
 
         // Ambil next material (urutan berikutnya)
-        $nextMaterial = TrainingMaterial::where('category_id', $material->category_id)
-            ->where('order', '>', $material->order)
-            ->orderBy('order', 'asc')
-            ->first();
+        $nextMaterial = null;
+        if ($material->category_id && $material->display_order !== null) {
+            $nextMaterial = TrainingMaterial::where('category_id', $material->category_id)
+                ->where('display_order', '>', $material->display_order)
+                ->orderBy('display_order', 'asc')
+                ->first();
+        }
 
         // Ambil previous material (urutan sebelumnya)
-        $previousMaterial = TrainingMaterial::where('category_id', $material->category_id)
-            ->where('order', '<', $material->order)
-            ->orderBy('order', 'desc')
-            ->first();
+        $previousMaterial = null;
+        if ($material->category_id && $material->display_order !== null) {
+            $previousMaterial = TrainingMaterial::where('category_id', $material->category_id)
+                ->where('display_order', '<', $material->display_order)
+                ->orderBy('display_order', 'desc')
+                ->first();
+        }
 
         return view('portal-training.materials.show', compact(
             'material',
-            'progress',
+            'materialProgress',
             'assignment',
             'nextMaterial',
             'previousMaterial'
@@ -110,7 +140,18 @@ class MaterialController extends Controller
         $request->validate([
             'current_time' => 'required|numeric',
             'duration' => 'required|numeric',
-            'assignment_id' => 'required|exists:training_assignments,id',
+            'assignment_id' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('pgsql3')
+                        ->table('tb_training_assignments')
+                        ->where('id', $value)
+                        ->exists();
+                    if (!$exists) {
+                        $fail('Assignment tidak ditemukan.');
+                    }
+                },
+            ],
         ]);
 
         $user = Auth::user();
@@ -167,10 +208,25 @@ class MaterialController extends Controller
      */
     private function checkMaterialAccess($employeeId, $materialId)
     {
+        // Validasi input
+        if (empty($employeeId) || empty($materialId)) {
+            return false;
+        }
+        
+        // Gunakan query langsung ke pivot table untuk menghindari ambiguous column
+        $assignmentIds = DB::connection('pgsql3')
+            ->table('tb_training_assignment_material')
+            ->where('material_id', $materialId)
+            ->pluck('assignment_id')
+            ->toArray();
+        
+        // Jika tidak ada assignment IDs, return false
+        if (empty($assignmentIds)) {
+            return false;
+        }
+        
         $assignment = TrainingAssignment::where('employee_id', $employeeId)
-            ->whereHas('materials', function($query) use ($materialId) {
-                $query->where('id', $materialId);
-            })
+            ->whereIn('id', $assignmentIds)
             ->first();
 
         return $assignment !== null;

@@ -18,9 +18,13 @@ class TrainingAssignment extends Model
     protected $fillable = [
         'training_id',
         'employee_id',
+        'session_code',
         'material_ids',
         'status',
+        'is_opened',
+        'opened_at',
         'assigned_date',
+        'start_date',
         'deadline_date',
         'progress_percentage',
         'notes',
@@ -31,8 +35,11 @@ class TrainingAssignment extends Model
     protected $casts = [
         'material_ids' => 'array',
         'assigned_date' => 'date',
+        'start_date' => 'date',
         'deadline_date' => 'date',
         'progress_percentage' => 'decimal:2',
+        'is_opened' => 'boolean',
+        'opened_at' => 'datetime',
     ];
 
     // Status constants
@@ -98,6 +105,14 @@ class TrainingAssignment extends Model
     }
 
     /**
+     * Get session progress
+     */
+    public function sessionProgress(): HasMany
+    {
+        return $this->hasMany(TrainingSessionProgress::class, 'assignment_id');
+    }
+
+    /**
      * Get materials (from material_ids JSON)
      */
     public function getMaterialsAttribute()
@@ -118,7 +133,15 @@ class TrainingAssignment extends Model
      */
     public function materials()
     {
-        return $this->belongsToMany(TrainingMaterial::class, 'tb_training_assignment_material', 'assignment_id', 'material_id')
+        return $this->belongsToMany(
+            TrainingMaterial::class, 
+            'tb_training_assignment_material', 
+            'assignment_id', 
+            'material_id',
+            'id',
+            'id'
+        )
+            ->using(\Illuminate\Database\Eloquent\Relations\Pivot::class)
             ->withPivot('order')
             ->withTimestamps();
     }
@@ -150,6 +173,93 @@ class TrainingAssignment extends Model
             ->count();
 
         return ($completedCount / $materials->count()) * 100;
+    }
+
+    /**
+     * Calculate session progress percentage
+     */
+    public function calculateSessionProgress()
+    {
+        $sessions = $this->training->sessions ?? collect();
+        if ($sessions->isEmpty()) {
+            return 0;
+        }
+
+        $completedCount = $this->sessionProgress()
+            ->whereIn('status', [TrainingSessionProgress::STATUS_PASSED, TrainingSessionProgress::STATUS_COMPLETED])
+            ->count();
+
+        return ($completedCount / $sessions->count()) * 100;
+    }
+
+    /**
+     * Get current session (the next session to be completed)
+     */
+    public function getCurrentSession()
+    {
+        $allSessions = $this->training->sessions()->active()->ordered()->get();
+
+        foreach ($allSessions as $session) {
+            $progress = $this->sessionProgress()
+                ->where('session_id', $session->id)
+                ->first();
+
+            // If no progress or not passed, this is the current session
+            if (!$progress || !in_array($progress->status, [TrainingSessionProgress::STATUS_PASSED, TrainingSessionProgress::STATUS_COMPLETED])) {
+                return $session;
+            }
+        }
+
+        return null; // All sessions completed
+    }
+
+    /**
+     * Get current session progress
+     */
+    public function getCurrentSessionProgress()
+    {
+        $currentSession = $this->getCurrentSession();
+
+        if (!$currentSession) {
+            return null;
+        }
+
+        return $this->sessionProgress()
+            ->where('session_id', $currentSession->id)
+            ->first();
+    }
+
+    /**
+     * Check if all sessions are completed
+     * A session is considered completed if it has been submitted (not not_started or in_progress)
+     */
+    public function isAllSessionsCompleted()
+    {
+        $totalSessions = $this->training->sessions()->active()->count();
+
+        if ($totalSessions === 0) {
+            return true;
+        }
+
+        // Get all sessions for this training
+        $allSessions = $this->training->sessions()->active()->get();
+        
+        // Check if all sessions have been submitted (have progress with status that is not not_started or in_progress)
+        foreach ($allSessions as $session) {
+            $progress = $this->sessionProgress()
+                ->where('session_id', $session->id)
+                ->first();
+            
+            // If no progress or still in progress/not started, not all sessions are completed
+            if (!$progress || in_array($progress->status, [
+                TrainingSessionProgress::STATUS_NOT_STARTED,
+                TrainingSessionProgress::STATUS_IN_PROGRESS
+            ])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

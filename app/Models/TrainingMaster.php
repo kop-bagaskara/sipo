@@ -13,8 +13,8 @@ class TrainingMaster extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Use the HR PostgreSQL connection
-    protected $connection = 'pgsql2';
+    // Use pgsql3 for Portal Training
+    protected $connection = 'pgsql3';
 
     protected $table = 'tb_training_masters';
 
@@ -34,6 +34,7 @@ class TrainingMaster extends Model
         'instructor_contact',
         'status',
         'is_active',
+        'allow_retry',
         'target_departments',
         'target_positions',
         'target_levels',
@@ -49,7 +50,8 @@ class TrainingMaster extends Model
         'target_positions' => 'array',
         'target_levels' => 'array',
         'cost_per_participant' => 'decimal:2',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'allow_retry' => 'boolean'
     ];
 
     // Training types
@@ -137,6 +139,14 @@ class TrainingMaster extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(TrainingSchedule::class, 'training_id');
+    }
+
+    /**
+     * Get training sessions
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(TrainingSession::class, 'training_id');
     }
 
     /**
@@ -265,5 +275,26 @@ class TrainingMaster extends Model
     public function scopeForDepartment($query, $departmentId)
     {
         return $query->whereJsonContains('target_departments', $departmentId);
+    }
+
+    /**
+     * Get training materials
+     * TrainingMaster dan TrainingMaterial sama-sama di pgsql3
+     */
+    public function materials(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            TrainingMaterial::class,
+            'tb_training_master_material', // Pivot table di pgsql3
+            'training_id',
+            'material_id',
+            'id',
+            'id'
+        )
+            ->using(\Illuminate\Database\Eloquent\Relations\Pivot::class)
+            ->withPivot('display_order')
+            ->withTimestamps()
+            ->select('tb_training_materials.*', 'tb_training_master_material.display_order')
+            ->orderBy('tb_training_master_material.display_order', 'asc');
     }
 }

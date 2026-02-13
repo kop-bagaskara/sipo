@@ -325,6 +325,17 @@ Route::group(['prefix' => 'sipo'], function () {
         Route::get('master-level-data-detail/{id}', [MasterDataController::class, 'levelIndexDataDetailData'])->name('master.level-data-detail');
         Route::post('delete-master-level-data/{id}', [MasterDataController::class, 'deleteMasterLevelData'])->name('master.delete-master-level-data');
 
+        // Master Menu Navigation Settings
+        Route::resource('menu-navigation-settings', \App\Http\Controllers\MenuNavigationSettingController::class)->names([
+            'index' => 'master.menu-navigation-settings.index',
+            'create' => 'master.menu-navigation-settings.create',
+            'store' => 'master.menu-navigation-settings.store',
+            'show' => 'master.menu-navigation-settings.show',
+            'edit' => 'master.menu-navigation-settings.edit',
+            'update' => 'master.menu-navigation-settings.update',
+            'destroy' => 'master.menu-navigation-settings.destroy',
+        ]);
+
         // Master Jabatan
         Route::get('master-jabatan', [MasterDataController::class, 'indexJabatan'])->name('jabatan.index');
         Route::post('master-jabatan-data', [MasterDataController::class, 'jabatanIndexDataDetail'])->name('master.jabatan-data');
@@ -1491,6 +1502,7 @@ Route::group(['prefix' => 'sipo'], function () {
             Route::prefix('portal-training')->name('portal-training.')->group(function () {
                 // Portal Dashboard (untuk karyawan)
                 Route::get('/', [PortalTrainingController::class, 'index'])->name('index');
+                Route::post('/start/{id}', [PortalTrainingController::class, 'start'])->name('start');
 
                 // Materi Routes
                 Route::prefix('materials')->name('materials.')->group(function () {
@@ -1508,8 +1520,32 @@ Route::group(['prefix' => 'sipo'], function () {
                     Route::get('/{examId}/result', [App\Http\Controllers\PortalTraining\ExamController::class, 'result'])->name('result');
                 });
 
+                // Sessions Routes (untuk karyawan menjalankan training sessions)
+                Route::prefix('sessions')->name('sessions.')->group(function () {
+                    Route::get('/{assignmentId}/{sessionId}', [PortalTrainingController::class, 'showSession'])->name('show');
+                    Route::post('/{assignmentId}/{sessionId}/start', [PortalTrainingController::class, 'startSession'])->name('start');
+                    Route::post('/{assignmentId}/{sessionId}/submit', [PortalTrainingController::class, 'submitSession'])->name('submit');
+                    Route::post('/{assignmentId}/{sessionId}/retry', [PortalTrainingController::class, 'retrySession'])->name('retry');
+                });
+
+                // Video Streaming Route (untuk Google Drive video dengan kontrol penuh)
+                Route::get('/video/stream/{fileId}', [PortalTrainingController::class, 'streamVideo'])->name('video.stream');
+
+                // Scores/Results Routes
+                Route::prefix('scores')->name('scores.')->group(function () {
+                    Route::get('/', [PortalTrainingController::class, 'scoresIndex'])->name('index');
+                    Route::get('/{assignmentId}', [PortalTrainingController::class, 'viewScores'])->name('show');
+                });
+                Route::get('/history', [PortalTrainingController::class, 'history'])->name('history');
+
                 // Master Data Routes (untuk trainer/admin)
                 Route::prefix('master')->name('master.')->group(function () {
+                    // Dashboard
+                    Route::get('/dashboard', [PortalTrainingController::class, 'masterDashboard'])->name('dashboard.index');
+
+                    // Test Google Drive API
+                    Route::get('/test-google-drive', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'testGoogleDriveApi'])->name('test-google-drive');
+
                     // Material Categories
                     Route::prefix('categories')->name('categories.')->group(function () {
                         Route::get('/', [App\Http\Controllers\PortalTraining\Master\MaterialCategoryController::class, 'index'])->name('index');
@@ -1549,10 +1585,23 @@ Route::group(['prefix' => 'sipo'], function () {
                         Route::get('/create', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'create'])->name('create');
                         Route::post('/', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'store'])->name('store');
                         Route::post('/import', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'import'])->name('import');
+                        Route::get('/download-template', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'downloadTemplate'])->name('download-template');
                         Route::get('/{id}', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'show'])->name('show');
                         Route::get('/{id}/edit', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'edit'])->name('edit');
                         Route::put('/{id}', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'update'])->name('update');
                         Route::delete('/{id}', [App\Http\Controllers\PortalTraining\Master\QuestionBankController::class, 'destroy'])->name('destroy');
+                    });
+
+                    // Training Masters
+                    Route::prefix('training-masters')->name('training-masters.')->group(function () {
+                        Route::get('/', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'index'])->name('index');
+                        Route::get('/data', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'getData'])->name('getData');
+                        Route::get('/create', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'create'])->name('create');
+                        Route::post('/', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'store'])->name('store');
+                        Route::get('/{id}', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'show'])->name('show');
+                        Route::get('/{id}/edit', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'edit'])->name('edit');
+                        Route::put('/{id}', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'update'])->name('update');
+                        Route::delete('/{id}', [App\Http\Controllers\PortalTraining\Master\TrainingMasterController::class, 'destroy'])->name('destroy');
                     });
 
                     // Assignments
@@ -1562,10 +1611,20 @@ Route::group(['prefix' => 'sipo'], function () {
                         Route::get('/create', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'create'])->name('create');
                         Route::post('/', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'store'])->name('store');
                         Route::post('/bulk-assign', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'bulkAssign'])->name('bulkAssign');
+                        Route::get('/session/{code}', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'viewSession'])->name('viewSession');
+                        Route::post('/session/{code}/start', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'startSession'])->name('startSession');
+                        Route::delete('/session/{code}', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'destroySession'])->name('destroySession');
+                        Route::post('/{id}/start', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'start'])->name('start');
                         Route::get('/{id}', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'show'])->name('show');
                         Route::get('/{id}/edit', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'edit'])->name('edit');
                         Route::put('/{id}', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'update'])->name('update');
                         Route::delete('/{id}', [App\Http\Controllers\PortalTraining\Master\AssignmentController::class, 'destroy'])->name('destroy');
+                    });
+
+                    // Reports
+                    Route::prefix('reports')->name('reports.')->group(function () {
+                        Route::get('/', [App\Http\Controllers\PortalTraining\PortalTrainingReportController::class, 'index'])->name('index');
+                        Route::get('/export', [App\Http\Controllers\PortalTraining\PortalTrainingReportController::class, 'exportExcel'])->name('export');
                     });
                 });
             });

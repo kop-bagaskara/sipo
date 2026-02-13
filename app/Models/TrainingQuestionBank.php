@@ -20,6 +20,8 @@ class TrainingQuestionBank extends Model
         'question_type',
         'difficulty_level_id',
         'material_id',
+        'theme',
+        'type_number',
         'correct_answer',
         'answer_options',
         'explanation',
@@ -87,6 +89,22 @@ class TrainingQuestionBank extends Model
     public function scopeByMaterial($query, $materialId)
     {
         return $query->where('material_id', $materialId);
+    }
+
+    /**
+     * Scope by theme
+     */
+    public function scopeByTheme($query, $theme)
+    {
+        return $query->where('theme', $theme);
+    }
+
+    /**
+     * Scope by type number
+     */
+    public function scopeByTypeNumber($query, $typeNumber)
+    {
+        return $query->where('type_number', $typeNumber);
     }
 
     /**

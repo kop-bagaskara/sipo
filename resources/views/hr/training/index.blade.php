@@ -377,6 +377,9 @@
                         $('#editTrainingContent').html(data);
                         $('#editTrainingForm').attr('action', `/sipo/hr/training/${id}`);
                         $('#editTrainingModal').modal('show');
+                        
+                        // Re-initialize scripts after content is loaded
+                        // Scripts in the loaded content will run automatically
                     });
                 }
 

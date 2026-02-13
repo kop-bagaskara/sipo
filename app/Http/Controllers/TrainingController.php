@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TrainingMaster;
 use App\Models\TrainingParticipant;
 use App\Models\TrainingDepartment;
+use App\Models\TrainingSession;
 use App\Models\User;
 use App\Models\Divisi;
 use Illuminate\Http\Request;
@@ -97,6 +98,29 @@ class TrainingController extends Controller
                 'training_code' => 'TRN-' . str_pad(TrainingMaster::count() + 1, 4, '0', STR_PAD_LEFT)
             ]);
 
+            // Save training sessions
+            if ($request->has('sessions') && is_array($request->sessions)) {
+                foreach ($request->sessions as $sessionData) {
+                    if (!empty($sessionData['session_title'])) {
+                        TrainingSession::create([
+                            'training_id' => $training->id,
+                            'session_order' => $sessionData['session_order'] ?? 1,
+                            'session_title' => $sessionData['session_title'],
+                            'description' => $sessionData['description'] ?? null,
+                            'has_video' => isset($sessionData['has_video']) && $sessionData['has_video'] == '1',
+                            'video_url' => isset($sessionData['has_video']) && $sessionData['has_video'] == '1' 
+                                ? ($sessionData['video_url'] ?? null) 
+                                : null,
+                            'video_duration_seconds' => isset($sessionData['has_video']) && $sessionData['has_video'] == '1'
+                                ? ($sessionData['video_duration_seconds'] ?? null)
+                                : null,
+                            'display_order' => $sessionData['session_order'] ?? 1,
+                            'is_active' => true,
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             return redirect()->route('hr.training.index')
@@ -134,7 +158,7 @@ class TrainingController extends Controller
      */
     public function edit($id)
     {
-        $training = TrainingMaster::with(['creator', 'participants'])->findOrFail($id);
+        $training = TrainingMaster::with(['creator', 'participants', 'sessions'])->findOrFail($id);
         $departments = Divisi::all();
         $users = User::all();
 

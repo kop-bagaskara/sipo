@@ -87,8 +87,8 @@
 
         <!-- Modal Import Excel -->
         <div class="modal fade" id="modal-import-excel" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content ">
                     <div class="modal-header">
                         <h5 class="modal-title">Import Forecast dari Excel</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -99,6 +99,14 @@
                         @csrf
                         <div class="modal-body">
                             <div class="form-group">
+                                <label for="customer">Pilih Customer <span class="text-danger">*</span></label>
+                                <select class="form-control" name="customer" id="customer" required>
+                                    <option value="">-- Pilih Customer --</option>
+                                    <option value="Unilever">Unilever</option>
+                                </select>
+                                <small class="form-text text-muted">Pilih customer untuk forecast ini</small>
+                            </div>
+                            <div class="form-group">
                                 <label>Pilih File Excel <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
                                 <small class="form-text text-muted">
@@ -106,23 +114,12 @@
                                     <a href="{{ route('forecasting.download-template') }}" target="_blank">Download Template Excel</a>
                                 </small>
                             </div>
-                            <div class="alert alert-success">
-                                <strong><i class="mdi mdi-lightbulb-on"></i> Fitur Auto-Detect:</strong><br>
-                                - Sistem akan otomatis membaca semua sheet yang dimulai dengan "FC"<br>
-                                - Customer dan periode akan diambil dari nama sheet (contoh: "FC Unilever Januari 2026")<br>
-                                - Sistem akan membaca header baris 1 untuk mencari kolom bulan (Februari, Maret, dll)<br>
-                                - QTY Forecast akan diambil dari kolom bulan yang ditemukan<br>
-                                - Tidak perlu input manual customer dan periode!
-                            </div>
                             <div class="alert alert-info">
-                                <strong>Format Sheet Name:</strong><br>
-                                - Sheet harus dimulai dengan "FC" (contoh: "FC Unilever Januari 2026")<br>
-                                - Format: "FC [Customer] [Bulan] [Tahun]"<br>
-                                - Contoh: "FC Unilever Januari 2026", "FC Nabati Februari 2026"<br><br>
-                                <strong>Format Header:</strong><br>
-                                - Baris 1 harus berisi nama bulan (Februari, Maret, dll)<br>
-                                - Sistem akan mencari kolom "QTY" dan "TON" di bawah bulan tersebut<br>
-                                - Kolom Item Code di kolom C, Item Name di kolom D
+                                <strong><i class="mdi mdi-information"></i> Informasi Import:</strong><br>
+                                - Pastikan file Excel sesuai dengan template<br>
+                                - Customer akan diambil dari pilihan di atas<br>
+                                - Sheet akan dibaca sesuai format template<br>
+                                - Periode dan data forecast akan diambil dari file Excel
                             </div>
                         </div>
                         <div class="modal-footer">

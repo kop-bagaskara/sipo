@@ -162,6 +162,21 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <!-- Pengaturan Sesi Training -->
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="mb-0"><strong>Pengaturan Sesi Training</strong></label>
+                                    <button type="button" class="btn btn-sm btn-primary" id="addSessionBtn">
+                                        <i class="mdi mdi-plus mr-1"></i>
+                                        Tambah Sesi
+                                    </button>
+                                </div>
+                                <div id="sessionsContainer">
+                                    <!-- Sessions will be added here dynamically -->
+                                </div>
+                                <small class="text-muted">Atur urutan sesi training. Setiap sesi bisa memiliki video atau tidak.</small>
+                            </div>
                         </div>
 
                         <div class="card-footer">
@@ -183,7 +198,120 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                // Form validation atau script lainnya jika diperlukan
+                let sessionCounter = 0;
+
+                // Add new session
+                $('#addSessionBtn').on('click', function() {
+                    sessionCounter++;
+                    const sessionHtml = `
+                        <div class="card mb-3 session-item" data-session-index="${sessionCounter}">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Sesi ${sessionCounter}</h5>
+                                    <button type="button" class="btn btn-sm btn-danger remove-session-btn">
+                                        <i class="mdi mdi-delete"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Judul Sesi <span class="text-danger">*</span></label>
+                                            <input type="text" name="sessions[${sessionCounter}][session_title]" 
+                                                class="form-control" required placeholder="Contoh: Pengenalan K3">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Deskripsi</label>
+                                            <textarea name="sessions[${sessionCounter}][description]" 
+                                                class="form-control" rows="2" 
+                                                placeholder="Deskripsi singkat tentang sesi ini"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" name="sessions[${sessionCounter}][has_video]" 
+                                                class="form-check-input has-video-checkbox" 
+                                                id="has_video_${sessionCounter}" value="1">
+                                            <label class="form-check-label" for="has_video_${sessionCounter}">
+                                                <strong>Sesi ini memiliki video</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row video-fields" style="display: none;">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label>URL Video <span class="text-danger">*</span></label>
+                                            <input type="text" name="sessions[${sessionCounter}][video_url]" 
+                                                class="form-control video-url-input" 
+                                                placeholder="https://example.com/video.mp4 atau path/to/video.mp4">
+                                            <small class="text-muted">URL lengkap atau path relatif dari storage/public</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Durasi Video (detik)</label>
+                                            <input type="number" name="sessions[${sessionCounter}][video_duration_seconds]" 
+                                                class="form-control" min="1" 
+                                                placeholder="3600">
+                                            <small class="text-muted">Durasi dalam detik (contoh: 3600 = 1 jam)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="sessions[${sessionCounter}][session_order]" value="${sessionCounter}">
+                            </div>
+                        </div>
+                    `;
+                    $('#sessionsContainer').append(sessionHtml);
+                    updateSessionNumbers();
+                });
+
+                // Remove session
+                $(document).on('click', '.remove-session-btn', function() {
+                    $(this).closest('.session-item').remove();
+                    updateSessionNumbers();
+                });
+
+                // Toggle video fields
+                $(document).on('change', '.has-video-checkbox', function() {
+                    const videoFields = $(this).closest('.card-body').find('.video-fields');
+                    const videoUrlInput = videoFields.find('.video-url-input');
+                    
+                    if ($(this).is(':checked')) {
+                        videoFields.slideDown();
+                        videoUrlInput.prop('required', true);
+                    } else {
+                        videoFields.slideUp();
+                        videoUrlInput.prop('required', false);
+                        videoUrlInput.val('');
+                    }
+                });
+
+                // Update session numbers
+                function updateSessionNumbers() {
+                    $('.session-item').each(function(index) {
+                        const newNumber = index + 1;
+                        $(this).find('.card-header h5').text('Sesi ' + newNumber);
+                        $(this).find('input[name*="[session_order]"]').val(newNumber);
+                        $(this).attr('data-session-index', newNumber);
+                        
+                        // Update all input names
+                        $(this).find('input, textarea, select').each(function() {
+                            const name = $(this).attr('name');
+                            if (name) {
+                                const newName = name.replace(/sessions\[\d+\]/, `sessions[${newNumber}]`);
+                                $(this).attr('name', newName);
+                            }
+                        });
+                    });
+                }
             });
         </script>
     @endpush

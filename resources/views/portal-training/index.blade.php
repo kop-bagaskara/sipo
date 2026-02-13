@@ -83,7 +83,7 @@
                                         <div class="card assignment-card">
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    <h5 class="card-title mb-0">{{ $assignment->training_id ? $assignment->training->training_name : 'Training Assignment' }}</h5>
+                                                    <h5 class="card-title mb-0">{{ $assignment->training ? $assignment->training->training_name : 'Training Assignment' }}</h5>
                                                     <span class="status-badge status-{{ $assignment->status }}">
                                                         @if($assignment->status == 'assigned')
                                                             Ditetapkan
@@ -102,9 +102,16 @@
                                                     Ditetapkan: {{ $assignment->assigned_date->format('d M Y') }}
                                                 </p>
 
+                                                @if($assignment->start_date)
+                                                    <p class="text-muted mb-2">
+                                                        <i class="mdi mdi-calendar-clock mr-1"></i>
+                                                        Mulai: {{ $assignment->start_date->format('d M Y') }}
+                                                    </p>
+                                                @endif
+
                                                 @if($assignment->deadline_date)
                                                     <p class="text-muted mb-2">
-                                                        <i class="mdi mdi-clock-outline mr-1"></i>
+                                                        <i class="mdi mdi-clock mr-1"></i>
                                                         Deadline: {{ $assignment->deadline_date->format('d M Y') }}
                                                     </p>
                                                 @endif
@@ -124,11 +131,91 @@
                                                 </div>
 
                                                 <div class="mt-3">
-                                                    <a href="{{ route('hr.portal-training.materials.show', $assignment->materials->first()->id ?? '#') }}"
-                                                       class="btn btn-primary btn-sm">
-                                                        <i class="mdi mdi-play-circle mr-1"></i>
-                                                        Mulai Training
-                                                    </a>
+                                                    @php
+                                                        $today = \Carbon\Carbon::now()->toDateString();
+                                                        $startDate = $assignment->start_date ? $assignment->start_date->format('Y-m-d') : null;
+                                                        $canStart = false;
+                                                        $disabledReason = '';
+                                                        
+                                                        if ($assignment->status === 'completed') {
+                                                            $disabledReason = 'Training sudah selesai';
+                                                        } elseif ($assignment->status === 'expired') {
+                                                            $disabledReason = 'Training sudah expired';
+                                                        } elseif (!$assignment->is_opened) {
+                                                            // Tombol hanya bisa ditekan ketika training sudah dibuka oleh penyelenggara (is_opened = true)
+                                                            $disabledReason = 'Training belum dibuka oleh penyelenggara. Silakan tunggu penyelenggara membuka training.';
+                                                        } elseif ($assignment->is_opened) {
+                                                            // Training sudah dibuka oleh penyelenggara, user bisa mulai
+                                                            $canStart = true;
+                                                        }
+                                                        
+                                                        // Cek materials dari pivot table atau material_ids JSON
+                                                        $hasMaterial = false;
+                                                        $materials = $assignment->materials;
+                                                        
+                                                        // Fallback: jika materials kosong, cek material_ids JSON
+                                                        if ($materials->isEmpty() && $assignment->material_ids) {
+                                                            $materialIds = is_array($assignment->material_ids) 
+                                                                ? $assignment->material_ids 
+                                                                : json_decode($assignment->material_ids, true);
+                                                            $hasMaterial = !empty($materialIds);
+                                                        } else {
+                                                            $hasMaterial = $materials->count() > 0;
+                                                        }
+                                                    @endphp
+                                                    
+                                                    @if($hasMaterial)
+                                                        @php
+                                                            // Get first material ID
+                                                            $firstMaterialId = null;
+                                                            if ($materials->isNotEmpty()) {
+                                                                $firstMaterialId = $materials->first()->id;
+                                                            } elseif ($assignment->material_ids) {
+                                                                $materialIds = is_array($assignment->material_ids) 
+                                                                    ? $assignment->material_ids 
+                                                                    : json_decode($assignment->material_ids, true);
+                                                                $firstMaterialId = !empty($materialIds) ? $materialIds[0] : null;
+                                                            }
+                                                        @endphp
+                                                        
+                                                        @if($assignment->is_opened && $canStart && $firstMaterialId)
+                                                            {{-- Training sudah dibuka (is_opened = true): tombol untuk start --}}
+                                                            <button type="button" class="btn btn-primary btn-sm btn-start-training" 
+                                                                    data-assignment-id="{{ $assignment->id }}"
+                                                                    data-material-id="{{ $firstMaterialId }}">
+                                                                <i class="mdi mdi-play-circle mr-1"></i>
+                                                                Mulai Training
+                                                            </button>
+                                                        @elseif($assignment->is_opened && $firstMaterialId)
+                                                            {{-- Training sudah dibuka: langsung ke materials --}}
+                                                            <a href="{{ route('hr.portal-training.materials.show', $firstMaterialId) }}"
+                                                               class="btn btn-primary btn-sm">
+                                                                <i class="mdi mdi-play-circle mr-1"></i>
+                                                                Lanjutkan Training
+                                                            </a>
+                                                        @else
+                                                            {{-- Status lainnya atau belum waktunya: disabled --}}
+                                                            <button type="button" class="btn btn-secondary btn-sm" disabled title="{{ $disabledReason ?: 'Tidak ada materi training' }}">
+                                                                <i class="mdi mdi-clock-outline mr-1"></i>
+                                                                Mulai Training
+                                                            </button>
+                                                            @if($disabledReason)
+                                                                <small class="d-block text-muted mt-1">
+                                                                    <i class="mdi mdi-information-outline mr-1"></i>
+                                                                    {{ $disabledReason }}
+                                                                </small>
+                                                            @endif
+                                                        @endif
+                                                    @else
+                                                        <button type="button" class="btn btn-secondary btn-sm" disabled title="Tidak ada materi training">
+                                                            <i class="mdi mdi-clock-outline mr-1"></i>
+                                                            Mulai Training
+                                                        </button>
+                                                        <small class="d-block text-muted mt-1">
+                                                            <i class="mdi mdi-information-outline mr-1"></i>
+                                                            Tidak ada materi training
+                                                        </small>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -141,11 +228,55 @@
             </div>
         </div>
     @endsection
-    @section('js')
+    @section('scripts')
         <script src="{{ asset('sipo_krisan/public/new/plugins/datatables/jquery.dataTables.min.js') }}"></script>
         <script src="{{ asset('sipo_krisan/public/new/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
         <script src="{{ asset('sipo_krisan/public/new/plugins/datatables/dataTables.responsive.min.js') }}"></script>
         <script src="{{ asset('sipo_krisan/public/new/plugins/datatables/responsive.bootstrap4.min.js') }}"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.9/sweetalert2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                // Start training button
+                $(document).on('click', '.btn-start-training', function() {
+                    var assignmentId = $(this).data('assignment-id');
+                    var materialId = $(this).data('material-id');
+                    var $btn = $(this);
+                    
+                    // Disable button saat loading
+                    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Memulai...');
+                    
+                    $.ajax({
+                        url: `{{ route('hr.portal-training.start', ':id') }}`.replace(':id', assignmentId),
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Redirect ke materials
+                                window.location.href = response.redirect_url || `{{ route('hr.portal-training.materials.show', ':id') }}`.replace(':id', materialId);
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: response.message || 'Terjadi kesalahan saat memulai training.'
+                                });
+                                // Re-enable button
+                                $btn.prop('disabled', false).html('<i class="mdi mdi-play-circle mr-1"></i> Mulai Training');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan saat memulai training.'
+                            });
+                            // Re-enable button
+                            $btn.prop('disabled', false).html('<i class="mdi mdi-play-circle mr-1"></i> Mulai Training');
+                        }
+                    });
+                });
+            });
+        </script>
     @endsection
 
