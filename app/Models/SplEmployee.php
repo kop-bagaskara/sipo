@@ -21,12 +21,16 @@ class SplEmployee extends Model
         'is_manual',
         'is_signed',
         'signed_at',
+        'start_time',
+        'end_time',
     ];
 
     protected $casts = [
         'is_manual' => 'boolean',
         'is_signed' => 'boolean',
         'signed_at' => 'datetime',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
     ];
 
     /**

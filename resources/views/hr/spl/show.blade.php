@@ -81,36 +81,20 @@
                             {{ $splRequest->mesin ?? '-' }}
                         </div>
                     </div>
-
-                    @if($startTime || $endTime)
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Jam Mulai:</strong><br>
-                            {{ $startTime ?? '-' }}
+                    @php
+                        $eligibleForEdit = ($splRequest->supervisor_id === auth()->id()) && !$splRequest->head_approved_at && !$splRequest->manager_approved_at && !$splRequest->hrd_approved_at && $splRequest->status !== 'rejected';
+                    @endphp
+                    @if($eligibleForEdit)
+                        <div class="row mb-3">
+                            <div class="col-12 text-end">
+                                <a href="{{ route('hr.spl.edit', $splRequest->id) }}" class="btn btn-warning">
+                                    <i class="mdi mdi-pencil"></i> Edit SPL
+                                </a>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Jam Selesai:</strong><br>
-                            {{ $endTime ?? '-' }}
-                        </div>
-                        @if($startTime && $endTime)
-                        <div class="col-md-3">
-                            <strong>Durasi:</strong><br>
-                            @php
-                                $start = \Carbon\Carbon::createFromFormat('H:i', $startTime);
-                                $end = \Carbon\Carbon::createFromFormat('H:i', $endTime);
-                                // Handle jika end_time melewati tengah malam
-                                if ($end->lt($start)) {
-                                    $end->addDay();
-                                }
-                                $diff = $start->diff($end);
-                                $hours = $diff->h;
-                                $minutes = $diff->i;
-                            @endphp
-                            {{ $hours }} jam {{ $minutes > 0 ? $minutes . ' menit' : '' }}
-                        </div>
-                        @endif
-                    </div>
                     @endif
+
+                    {{-- Jam mulai/selesai sekarang per karyawan, tidak ditampilkan di header --}}
 
                     <div class="row mb-3">
                         <div class="col-12">
@@ -134,8 +118,8 @@
                                     <th>No</th>
                                     <th>NIP</th>
                                     <th>Nama Karyawan</th>
-                                    <th>Start Time</th>
-                                    <th>End Time</th>
+                                    <th>Jam Mulai</th>
+                                    <th>Jam Selesai</th>
                                     {{-- <th>Status TTD</th> --}}
                                 </tr>
                             </thead>
@@ -145,8 +129,8 @@
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $employee->nip ?? '-' }}</td>
                                         <td>{{ $employee->employee_name }}</td>
-                                        <td>{{ $startTime ?? '-' }}</td>
-                                        <td>{{ $endTime ?? '-' }}</td>
+                                        <td>{{ $employee->start_time ? $employee->start_time->format('H:i') : '-' }}</td>
+                                        <td>{{ $employee->end_time ? $employee->end_time->format('H:i') : '-' }}</td>
                                         {{-- <td>
                                             @if($employee->is_signed)
                                                 <span class="badge bg-success">Sudah TTD</span>
@@ -312,4 +296,3 @@
     }
 </script>
 @endsection
-

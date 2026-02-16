@@ -88,8 +88,7 @@ class SplController extends Controller
         $validated = $request->validate([
             'request_date' => 'required|date',
             'shift' => 'required|string|max:255',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i',
+            // Jam dipindah ke tiap karyawan
             'mesin' => 'nullable|string|max:255',
             'keperluan' => 'required|string',
             'employees' => 'required|array|min:1',
@@ -97,33 +96,23 @@ class SplController extends Controller
             'employees.*.nip' => 'nullable|string|max:50',
             'employees.*.employee_name' => 'required|string|max:255',
             'employees.*.is_manual' => 'nullable',
+            'employees.*.start_time' => 'required|date_format:H:i',
+            'employees.*.end_time' => 'required|date_format:H:i',
         ]);
 
         DB::connection('pgsql2')->beginTransaction();
 
         try {
-            // Convert time format H:i to datetime for database storage (timestamp column)
+            // Jam header tidak digunakan lagi; gunakan jam per karyawan
             $startTime = null;
             $endTime = null;
-            if (!empty($validated['start_time'])) {
-                // Combine request_date dengan start_time untuk membuat datetime lengkap
-                $startTime = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $validated['start_time']);
-            }
-            if (!empty($validated['end_time'])) {
-                // Combine request_date dengan end_time untuk membuat datetime lengkap
-                // Handle jika end_time melewati tengah malam (tambah 1 hari)
-                $endTime = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $validated['end_time']);
-                if ($startTime && $endTime->lt($startTime)) {
-                    $endTime->addDay();
-                }
-            }
 
             // Create SPL request
             $splRequest = SplRequest::create([
                 'spl_number' => SplRequest::generateSplNumber(),
                 'request_date' => $validated['request_date'],
                 'shift' => $validated['shift'],
-                'start_time' => $startTime,
+                'start_time' => $startTime, // diset null; ringkasan bisa dihitung dari data karyawan
                 'end_time' => $endTime,
                 'mesin' => $validated['mesin'] ?? null,
                 'keperluan' => $validated['keperluan'],
@@ -134,13 +123,7 @@ class SplController extends Controller
                 'current_approval_order' => 0, // Akan di-update saat approval
             ]);
 
-            // Store start_time and end_time in session for PDF printing (backward compatibility)
-            if (!empty($validated['start_time'])) {
-                session(['spl_start_time_' . $splRequest->id => $validated['start_time']]);
-            }
-            if (!empty($validated['end_time'])) {
-                session(['spl_end_time_' . $splRequest->id => $validated['end_time']]);
-            }
+            // Tidak lagi menyimpan jam header ke session
 
             // Create SPL employees
             foreach ($validated['employees'] as $employeeData) {
@@ -155,6 +138,19 @@ class SplController extends Controller
                     }
                 }
 
+                // Hitung start/end per karyawan sebagai timestamp dari request_date + HH:MM
+                $empStart = null;
+                $empEnd = null;
+                if (!empty($employeeData['start_time'])) {
+                    $empStart = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $employeeData['start_time']);
+                }
+                if (!empty($employeeData['end_time'])) {
+                    $empEnd = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $employeeData['end_time']);
+                    if ($empStart && $empEnd->lt($empStart)) {
+                        $empEnd->addDay();
+                    }
+                }
+
                 SplEmployee::create([
                     'spl_request_id' => $splRequest->id,
                     'employee_id' => !empty($employeeData['employee_id']) ? $employeeData['employee_id'] : null,
@@ -162,6 +158,8 @@ class SplController extends Controller
                     'employee_name' => trim($employeeData['employee_name']),
                     'is_manual' => $isManual,
                     'is_signed' => false,
+                    'start_time' => $empStart,
+                    'end_time' => $empEnd,
                 ]);
             }
 
@@ -308,6 +306,98 @@ class SplController extends Controller
         }
 
         return view('hr.spl.show', compact('splRequest', 'approvalFlow', 'canApprove', 'canDisapprove', 'isPending', 'currentApprovalLevel', 'startTime', 'endTime'));
+    }
+
+    /**
+     * Edit SPL (hanya supervisor pembuat, saat pending dan belum ada approval HEAD/MANAGER/HR)
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+        $splRequest = SplRequest::with('employees')->findOrFail($id);
+        if ($splRequest->supervisor_id !== $user->id && !$user->isHR()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit SPL ini.');
+        }
+        $hasAnyApproval = $splRequest->head_approved_at || $splRequest->manager_approved_at || $splRequest->hrd_approved_at;
+        if ($splRequest->status === SplRequest::STATUS_REJECTED || $hasAnyApproval) {
+            abort(403, 'SPL tidak dapat diedit karena sudah ada proses approval atau ditolak.');
+        }
+        return view('hr.spl.edit', compact('splRequest'));
+    }
+
+    /**
+     * Update SPL
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        $splRequest = SplRequest::with('employees')->findOrFail($id);
+        if ($splRequest->supervisor_id !== $user->id && !$user->isHR()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit SPL ini.');
+        }
+        $hasAnyApproval = $splRequest->head_approved_at || $splRequest->manager_approved_at || $splRequest->hrd_approved_at;
+        if ($splRequest->status === SplRequest::STATUS_REJECTED || $hasAnyApproval) {
+            return back()->with('error', 'SPL tidak dapat diedit karena sudah ada proses approval atau ditolak.');
+        }
+
+        $validated = $request->validate([
+            'request_date' => 'required|date',
+            'shift' => 'required|string|max:255',
+            'mesin' => 'nullable|string|max:255',
+            'keperluan' => 'required|string',
+            'employees' => 'required|array|min:1',
+            'employees.*.employee_id' => 'nullable|exists:users,id',
+            'employees.*.nip' => 'nullable|string|max:50',
+            'employees.*.employee_name' => 'required|string|max:255',
+            'employees.*.is_manual' => 'nullable',
+            'employees.*.start_time' => 'required|date_format:H:i',
+            'employees.*.end_time' => 'required|date_format:H:i',
+        ]);
+
+        DB::connection('pgsql2')->beginTransaction();
+        try {
+            $splRequest->update([
+                'request_date' => $validated['request_date'],
+                'shift' => $validated['shift'],
+                'mesin' => $validated['mesin'] ?? null,
+                'keperluan' => $validated['keperluan'],
+            ]);
+
+            // Replace employees (sederhana, aman untuk status pending)
+            SplEmployee::where('spl_request_id', $splRequest->id)->delete();
+            foreach ($validated['employees'] as $employeeData) {
+                $isManual = false;
+                if (isset($employeeData['is_manual'])) {
+                    $isManualValue = $employeeData['is_manual'];
+                    if (is_string($isManualValue)) {
+                        $isManual = in_array(strtolower($isManualValue), ['true', '1'], true);
+                    } else {
+                        $isManual = (bool) $isManualValue;
+                    }
+                }
+                $empStart = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $employeeData['start_time']);
+                $empEnd = \Carbon\Carbon::parse($validated['request_date'] . ' ' . $employeeData['end_time']);
+                if ($empEnd->lt($empStart)) {
+                    $empEnd->addDay();
+                }
+                SplEmployee::create([
+                    'spl_request_id' => $splRequest->id,
+                    'employee_id' => !empty($employeeData['employee_id']) ? $employeeData['employee_id'] : null,
+                    'nip' => !empty($employeeData['nip']) ? $employeeData['nip'] : null,
+                    'employee_name' => trim($employeeData['employee_name']),
+                    'is_manual' => $isManual,
+                    'is_signed' => false,
+                    'start_time' => $empStart,
+                    'end_time' => $empEnd,
+                ]);
+            }
+            DB::connection('pgsql2')->commit();
+            return redirect()->route('hr.spl.show', $splRequest->id)->with('success', 'SPL berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::connection('pgsql2')->rollBack();
+            \Log::error('SPL Update Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui SPL: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -614,4 +704,3 @@ class SplController extends Controller
         }
     }
 }
-

@@ -274,33 +274,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-3">
-                                <label class="form-label">
-                                    Jam Mulai <span class="text-danger">*</span>
-                                    <i class="mdi mdi-help-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Jam mulai lembur (Format: HH:MM, contoh: 18:00)"></i>
-                                </label>
-                                <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
-                                       value="{{ old('start_time') }}" placeholder="Contoh: 18:00" required>
-                                @error('start_time')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label">
-                                    Jam Selesai <span class="text-danger">*</span>
-                                    <i class="mdi mdi-help-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Jam selesai lembur (Format: HH:MM, contoh: 22:00)"></i>
-                                </label>
-                                <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
-                                       value="{{ old('end_time') }}" placeholder="Contoh: 22:00" required>
-                                @error('end_time')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-3">
+                                                        <div class="col-md-3">
                                 <label class="form-label">
                                     Mesin
                                     <i class="mdi mdi-help-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Nama mesin yang akan dioperasikan selama lembur (Opsional)"></i>
@@ -323,6 +297,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="row mb-3">
                             <div class="col-12">
@@ -436,6 +411,22 @@
                                                 @error('employees.'.$i.'.employee_name')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
+                                                <div class="row mt-2">
+                                                    <div class="col-md-6">
+                                                        <label class="small text-muted mb-1">
+                                                            <i class="mdi mdi-clock-outline"></i> Jam Mulai <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="time" name="employees[{{ $i }}][start_time]" class="form-control form-control-sm"
+                                                               placeholder="HH:MM" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="small text-muted mb-1">
+                                                            <i class="mdi mdi-clock-outline"></i> Jam Selesai <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="time" name="employees[{{ $i }}][end_time]" class="form-control form-control-sm"
+                                                               placeholder="HH:MM" required>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="text-center">
                                                 @if($i > 0)
@@ -645,6 +636,22 @@
                                 <i class="mdi mdi-check-circle"></i> Terpilih
                             </span>
                         </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <label class="small text-muted mb-1">
+                                    <i class="mdi mdi-clock-outline"></i> Jam Mulai <span class="text-danger">*</span>
+                                </label>
+                                <input type="time" name="employees[${employeeIndex}][start_time]" class="form-control form-control-sm"
+                                       placeholder="HH:MM" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted mb-1">
+                                    <i class="mdi mdi-clock-outline"></i> Jam Selesai <span class="text-danger">*</span>
+                                </label>
+                                <input type="time" name="employees[${employeeIndex}][end_time]" class="form-control form-control-sm"
+                                       placeholder="HH:MM" required>
+                            </div>
+                        </div>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger remove-employee-row" data-index="${employeeIndex}" data-bs-toggle="tooltip" title="Hapus baris ini">
@@ -707,16 +714,7 @@
             // Add jam if filled
             const startTime = $('input[name="start_time"]').val();
             const endTime = $('input[name="end_time"]').val();
-            if (startTime || endTime) {
-                detailHtml += '<br>Jam: ';
-                if (startTime && endTime) {
-                    detailHtml += startTime + ' - ' + endTime;
-                } else if (startTime) {
-                    detailHtml += 'Mulai: ' + startTime;
-                } else if (endTime) {
-                    detailHtml += 'Selesai: ' + endTime;
-                }
-            }
+            // Jam tidak ditampilkan di header; diatur per karyawan
 
             detailHtml += '</div></div>';
 

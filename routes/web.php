@@ -1285,6 +1285,8 @@ Route::group(['prefix' => 'sipo'], function () {
                 Route::get('/create', [App\Http\Controllers\SplController::class, 'create'])->name('create');
                 Route::post('/', [App\Http\Controllers\SplController::class, 'store'])->name('store');
                 Route::get('/{id}', [App\Http\Controllers\SplController::class, 'show'])->name('show');
+                Route::get('/{id}/edit', [App\Http\Controllers\SplController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [App\Http\Controllers\SplController::class, 'update'])->name('update');
                 Route::get('/{id}/print', [App\Http\Controllers\SplController::class, 'print'])->name('print');
                 Route::post('/{id}/mark-signed', [App\Http\Controllers\SplController::class, 'markAsSigned'])->name('mark-signed');
                 Route::post('/{id}/process-approval', [App\Http\Controllers\SplController::class, 'processApproval'])->name('process-approval');
