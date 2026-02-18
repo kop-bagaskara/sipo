@@ -391,11 +391,11 @@
                 }
 
                 // Jika edit dan password kosong, hapus dari formData
-                if (isEditMode && !$('#password').val()) {
-                    formData = formData.filter(function(item) {
-                        return item.name !== 'password';
-                    });
-                }
+                // if (isEditMode && !$('#password').val()) {
+                //     formData = formData.filter(function(item) {
+                //         return item.name !== 'password';
+                //     });
+                // }
 
                 setLoading(true);
 

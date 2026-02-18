@@ -129,15 +129,8 @@
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $employee->nip ?? '-' }}</td>
                                         <td>{{ $employee->employee_name }}</td>
-                                        <td>{{ $employee->start_time ? $employee->start_time->format('H:i') : '-' }}</td>
-                                        <td>{{ $employee->end_time ? $employee->end_time->format('H:i') : '-' }}</td>
-                                        {{-- <td>
-                                            @if($employee->is_signed)
-                                                <span class="badge bg-success">Sudah TTD</span>
-                                            @else
-                                                <span class="badge bg-warning">Belum TTD</span>
-                                            @endif
-                                        </td> --}}
+                                        <td>{{ $employee->start_time ? $employee->start_time->format('H:i') : ($splRequest->start_time ? $splRequest->start_time->format('H:i') : '-') }}</td>
+                                        <td>{{ $employee->end_time ? $employee->end_time->format('H:i') : ($splRequest->end_time ? $splRequest->end_time->format('H:i') : '-') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -83,7 +83,6 @@ class MasterDataController extends Controller
                 'message' => 'Machine berhasil ditambahkan',
                 'data' => $machine
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -398,22 +397,68 @@ class MasterDataController extends Controller
         $data = $request->all();
 
         // dd($data);
-        User::updateOrCreate(
-            [
-                'id' => $data['id_usersystem'] ?? null, // Use null if id is not provided
-            ],
-            [
-                'name' => $data['fullname'],
-                'username' => $data['username'],
-                'email' => $data['email'],
-                'password' => bcrypt($data['password']),
-                'string_password' => $data['password'],
-                'level' => $data['level'],
-                'divisi' => $data['divisi'],
-                'jabatan' => $data['jabatan'],
-                'created_by' => auth()->user()->username,
-            ]
-        );
+
+        $dataUser = User::find($data['id_usersystem']);
+
+        if ($dataUser) {
+            // dd('ada');
+            if ($data['password'] == null) {
+                User::updateOrCreate(
+                    [
+                        'id' => $data['id_usersystem'] ?? null, // Use null if id is not provided
+                    ],
+                    [
+                        'name' => $data['fullname'],
+                        'username' => $data['username'],
+                        'email' => $data['email'],
+                        'password' => $dataUser['password'],
+                        'string_password' => $data['password'],
+                        'level' => $data['level'],
+                        'divisi' => $data['divisi'],
+                        'jabatan' => $data['jabatan'],
+                        'created_by' => auth()->user()->username,
+                    ]
+                );
+            } else {
+                User::updateOrCreate(
+                    [
+                        'id' => $data['id_usersystem'] ?? null, // Use null if id is not provided
+                    ],
+                    [
+                        'name' => $data['fullname'],
+                        'username' => $data['username'],
+                        'email' => $data['email'],
+                        'password' => bcrypt($data['password']),
+                        'string_password' => $data['password'],
+                        'level' => $data['level'],
+                        'divisi' => $data['divisi'],
+                        'jabatan' => $data['jabatan'],
+                        'created_by' => auth()->user()->username,
+                    ]
+                );
+            }
+
+        } else {
+            // dd('tidak');
+
+
+            User::updateOrCreate(
+                [
+                    'id' => $data['id_usersystem'] ?? null, // Use null if id is not provided
+                ],
+                [
+                    'name' => $data['fullname'],
+                    'username' => $data['username'],
+                    'email' => $data['email'],
+                    'password' => bcrypt($data['password']),
+                    'string_password' => $data['password'],
+                    'level' => $data['level'],
+                    'divisi' => $data['divisi'],
+                    'jabatan' => $data['jabatan'],
+                    'created_by' => auth()->user()->username,
+                ]
+            );
+        }
 
         return response()->json(['success' => 'Success', 'message' => 'Data berhasil disimpan']);
     }

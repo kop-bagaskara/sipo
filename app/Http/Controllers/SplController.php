@@ -185,7 +185,9 @@ class SplController extends Controller
     public function show($id)
     {
         $user = Auth::user();
+        // dd($user);
         $splRequest = SplRequest::with(['employees', 'supervisor', 'head', 'manager', 'hrd'])->findOrFail($id);
+        // dd($splRequest);
 
         // Check authorization
         if (!$user->isHR() && $splRequest->supervisor_id !== $user->id) {
@@ -295,7 +297,10 @@ class SplController extends Controller
 
         if ($splRequest->start_time) {
             $startTime = $splRequest->start_time->format('H:i');
+            // dd($startTime);
         } else {
+            // dd('2');
+            // dd($splRequest);
             $startTime = session('spl_start_time_' . $splRequest->id);
         }
 
